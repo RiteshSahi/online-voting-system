@@ -1,6 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { readFileSync } from 'fs';
+
+const dataPath = './data.json';
+const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
+
 const router = express.Router();
-const data = require('../data.json');
 
 // GET results for an event
 router.get('/:eventId', (req, res) => {
@@ -9,4 +13,4 @@ router.get('/:eventId', (req, res) => {
   res.json(eventCandidates);
 });
 
-module.exports = router;
+export default router;

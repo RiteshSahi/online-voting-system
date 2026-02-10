@@ -1,10 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const fs = require('fs');
-const path = require('path');
+import { Router } from 'express';
+import { writeFileSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const dataPath = path.join(__dirname, '../data.json');
-const data = require(dataPath);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const router = Router();
+const dataPath = join(__dirname, '../data.json');
+const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
 // POST vote
 router.post('/', (req, res) => {
@@ -27,9 +31,9 @@ router.post('/', (req, res) => {
   candidate.votes += 1;
 
   // Save to data.json
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+  writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
 
   res.json({ message: "Vote submitted successfully" });
 });
 
-module.exports = router;
+export default router;

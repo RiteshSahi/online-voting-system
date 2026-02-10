@@ -1,10 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const fs = require('fs');
-const path = require('path');
+import { Router } from 'express';
+import { writeFileSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const dataPath = path.join(__dirname, '../data.json');
-const data = require(dataPath);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const router = Router();
+const dataPath = join(__dirname, '../data.json');
+const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
 // GET all candidates
 router.get('/', (req, res) => {
@@ -30,7 +34,7 @@ router.post('/', (req, res) => {
   data.candidates.push(newCandidate);
 
   // Save to data.json
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+  writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
 
   res.json({ message: "Candidate applied successfully", candidate: newCandidate });
 });
@@ -44,7 +48,7 @@ router.patch('/:id/approve', (req, res) => {
 
   candidate.approved = true;
 
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+  writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
 
   res.json({
     message: "Candidate approved successfully",
@@ -61,7 +65,7 @@ router.patch('/:id/reject', (req, res) => {
 
   const removedCandidate = data.candidates.splice(candidateIndex, 1)[0];
 
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+  writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
 
   res.json({
     message: "Candidate rejected and removed",
@@ -70,4 +74,4 @@ router.patch('/:id/reject', (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

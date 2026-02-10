@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.ts';
 
 const createUser =  (name, email, password) => {
   if (!name || !email || !password) {
