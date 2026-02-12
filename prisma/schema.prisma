@@ -5,17 +5,67 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+ 
 }
 
 datasource db {
   provider = "postgresql"
+   url      = env("DATABASE_URL")
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  name     String?
   password String
+
+  votes      Vote[]
+  candidates Candidate[]
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}
+
+model Event {
+  id                  Int      @id @default(autoincrement())
+  title               String
+  description         String?
+  applicationDeadline DateTime
+  votingStart         DateTime
+  votingEnd           DateTime
+  resultsPublished    Boolean  @default(false)
+
+  candidates Candidate[]
+  votes      Vote[]
+}
+
+model Candidate {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  votes Vote[]
+}
+
+model Vote {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  eventId     Int
+  candidateId Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  event     Event     @relation(fields: [eventId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@unique([userId, eventId]) // one vote per event
 }
