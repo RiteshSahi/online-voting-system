@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "AdminStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- AlterTable
+ALTER TABLE "Admin" ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'PENDING';

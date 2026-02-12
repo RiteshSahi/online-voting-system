@@ -2,7 +2,7 @@ import {prisma} from '../config/db.js';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../utils/generateToken.js';
 
-const login = async (req, res) => {
+const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -41,12 +41,12 @@ const login = async (req, res) => {
 
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('userLogin error:', error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
 
-const register = async (req, res) => {
+const userRegister = async (req, res) => {
     try {
         const { name, email, password } = req.body;
         
@@ -87,7 +87,7 @@ const register = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
-const logout = async (req, res) => {
+const userLogout = async (req, res) => {
     res.clearCookie("jwt", {
         httpOnly: true,
         sameSite: "strict",
@@ -100,5 +100,4 @@ const logout = async (req, res) => {
     });
 };
 
-
-export { login, register, logout };
+export { userLogin, userRegister, userLogout };
