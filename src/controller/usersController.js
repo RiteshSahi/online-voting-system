@@ -30,7 +30,7 @@ const login = async (req, res) => {
         const { password: _, ...userWithoutPassword } = userExists;
 
         //Generate JWT Token
-        const token = generateToken(userExists.id);
+        const token = generateToken(userExists.id,res);
 
 
         return res.status(200).json({ 
@@ -71,12 +71,15 @@ const register = async (req, res) => {
                 password: hashedPassword
             }
         });
+        //Generate JWT Token
+        const token = generateToken(newUser.id,res);
         
         // Return user without password
         const { password: _, ...userWithoutPassword } = newUser;
         return res.status(201).json({
             message: "User registered successfully",
-            user: userWithoutPassword
+            user: userWithoutPassword,
+            token
         });
         
     } catch (error) {
@@ -84,5 +87,18 @@ const register = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+const logout = async (req, res) => {
+    res.clearCookie("jwt", {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production"
+    });
 
-export { login, register };
+    res.status(200).json({
+        status: "success",
+        message: "Logout successful"
+    });
+};
+
+
+export { login, register, logout };
