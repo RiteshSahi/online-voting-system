@@ -1,5 +1,6 @@
 import {prisma} from '../config/db.js';
 import bcrypt from 'bcrypt';
+import { generateToken } from '../utils/generateToken.js';
 
 const login = async (req, res) => {
     try {
@@ -27,10 +28,17 @@ const login = async (req, res) => {
         
         // Success - return user data (exclude password)
         const { password: _, ...userWithoutPassword } = userExists;
+
+        //Generate JWT Token
+        const token = generateToken(userExists.id);
+
+
         return res.status(200).json({ 
             message: "Login successful",
-            user: userWithoutPassword 
+            user: userWithoutPassword ,
+            token
         });
+
         
     } catch (error) {
         console.error('Login error:', error);
