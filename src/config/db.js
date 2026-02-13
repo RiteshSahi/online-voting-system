@@ -54,6 +54,6 @@ process.on("unhandledRejection", async (error) => {
 });
 
 // Connect to database on module load
+connectDB();
 
-
-export { prisma, checkConnection, connectDB };
+export { prisma, checkConnection };

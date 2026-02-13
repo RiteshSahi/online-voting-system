@@ -1,6 +1,6 @@
-import {prisma} from '../config/db.js';
+import {prisma} from '../../config/db.js';
 import bcrypt from 'bcrypt';
-import { generateToken } from '../utils/generateToken.js';
+import { generateToken } from '../../utils/generateToken.js';
 
 const userLogin = async (req, res) => {
     try {
