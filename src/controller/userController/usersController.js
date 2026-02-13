@@ -1,6 +1,8 @@
 import {prisma} from '../../config/db.js';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../../utils/generateToken.js';
+import { verifiedEmails } from "./otp.controller.js";
+
 
 const userLogin = async (req, res) => {
     try {
@@ -49,20 +51,36 @@ const userLogin = async (req, res) => {
 const userRegister = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        
+
+        // ✅ College email restriction
+        if (!email.endsWith("@khwopa.edu.np")) {
+            return res.status(400).json({
+                message: "Only Khwopa college emails allowed"
+            });
+        }
+
+        // ✅ OTP verification check
+        if (!verifiedEmails.has(email)) {
+            return res.status(403).json({
+                message: "Please verify OTP first"
+            });
+        }
+
         // Check if user already exists
         const userExists = await prisma.user.findUnique({
             where: { email }
         });
-        
+
         if (userExists) {
-            return res.status(409).json({ message: "User already exists with this email" });
+            return res.status(409).json({
+                message: "User already exists with this email"
+            });
         }
-        
+
         // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
+
         // Create new user
         const newUser = await prisma.user.create({
             data: {
@@ -71,17 +89,21 @@ const userRegister = async (req, res) => {
                 password: hashedPassword
             }
         });
-        //Generate JWT Token
-        const token = generateToken(newUser.id,res);
-        
-        // Return user without password
+
+        // ✅ OTP consumed
+        verifiedEmails.delete(email);
+
+        // Generate JWT
+        const token = generateToken(newUser.id, res);
+
         const { password: _, ...userWithoutPassword } = newUser;
+
         return res.status(201).json({
             message: "User registered successfully",
             user: userWithoutPassword,
             token
         });
-        
+
     } catch (error) {
         console.error('Registration error:', error);
         return res.status(500).json({ message: "Internal server error" });
