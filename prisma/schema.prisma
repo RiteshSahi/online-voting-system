@@ -47,14 +47,23 @@ enum AdminRole {
 }
 
 
+
 model Event {
-  id                  Int      @id @default(autoincrement())
-  title               String
-  description         String?
-  applicationDeadline DateTime
-  votingStart         DateTime
-  votingEnd           DateTime
-  resultsPublished    Boolean  @default(false)
+  id                Int      @id @default(autoincrement())
+  title             String
+  description       String?
+
+  allowedDept       String?   // ex: "BCT", "BCE"
+  allowedBatch      String?   // ex: "080"
+  yearRestriction   Int?      // ex: only 4th year
+
+  candidateDeadline DateTime
+  votingStart       DateTime
+  votingEnd         DateTime
+
+  status            String   @default("UPCOMING")
+
+  createdAt         DateTime @default(now())
 
   candidates Candidate[]
   votes      Vote[]

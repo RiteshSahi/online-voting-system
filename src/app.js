@@ -1,18 +1,27 @@
-import { config } from 'dotenv';
-config();
-
+import dotenv from "dotenv";
+dotenv.config(); // load .env at the very top
 import express from 'express';
-import routes from '../src/routes/routes.js';
+import cookieParser from "cookie-parser";
+import routes from './routes/routes.js';
 import { prisma, checkConnection } from './config/db.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware to parse JSON
+// Critical: Middleware MUST come before routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Routes
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`\n📥 ${req.method} ${req.path}`);
+  console.log("Headers:", req.headers['content-type']);
+  console.log("Body:", req.body);
+  next();
+});
+
+// Routes - mounted after middleware
 app.use('/', routes);
 
 // Health check route

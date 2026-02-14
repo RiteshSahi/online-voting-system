@@ -15,9 +15,11 @@ const registerAdmin = async (req, res) => {
             data: {
                 username,
                 password: hashedPassword,
-                status: "PENDING"
+                status: "PENDING",
+                role: "ADMIN" // default role for new admin requests
             }
         });
+
 
         res.json({ message: "Admin request submitted. Wait for approval by main admin." });
     } catch (error) {

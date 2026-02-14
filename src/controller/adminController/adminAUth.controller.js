@@ -5,6 +5,9 @@ import { generateToken } from "../../utils/generateToken.js";
 //Admin login
 const adminLogin = async (req, res) => {
     try {
+        console.log("Request body:", req.body);
+        console.log("Request headers:", req.headers);
+        
         const { username, password } = req.body;
 
         if (!username || !password) {
@@ -16,6 +19,7 @@ const adminLogin = async (req, res) => {
         const admin = await prisma.admin.findUnique({
             where: { username }
         });
+
 
         if (!admin) {
             return res.status(401).json({
@@ -38,12 +42,18 @@ const adminLogin = async (req, res) => {
             return res.status(403).json({ message: "Your admin request is not approved yet." });
         }
 
-        const token = generateToken(admin.id, res);
+        const token = generateToken(
+            { id: admin.id, role: admin.role },
+            res
+        );
+
 
         res.json({
             message: "Admin login successful",
+            role: admin.role,
             token
         });
+
 
     } catch (error) {
         console.error("adminLogin error:", error);
@@ -64,7 +74,7 @@ const adminLogout = (req, res) => {
     });
 };
 export {
-        adminLogin,
-        adminLogout
+    adminLogin,
+    adminLogout
 };
-    
+

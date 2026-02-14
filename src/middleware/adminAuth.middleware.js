@@ -6,7 +6,6 @@ export const protectAdmin = (req, res, next) => {
 
         const authHeader = req.headers.authorization;
 
-        // check bearer token
         if (authHeader && authHeader.startsWith("Bearer ")) {
             token = authHeader.split(" ")[1];
         }
@@ -20,6 +19,7 @@ export const protectAdmin = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         req.adminId = decoded.id;
+        req.adminRole = decoded.role;
 
         next();
 
@@ -28,4 +28,14 @@ export const protectAdmin = (req, res, next) => {
             message: "Auth failed"
         });
     }
+};
+
+export const superAdminOnly = (req, res, next) => {
+    if (req.adminRole !== "SUPER_ADMIN") {
+        return res.status(403).json({
+            message: "Super admin access only"
+        });
+    }
+
+    next();
 };

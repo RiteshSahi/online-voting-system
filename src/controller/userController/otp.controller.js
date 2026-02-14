@@ -2,7 +2,7 @@ import { transporter } from "../../config/mailer.js";
 
 const otpStore = new Map();
 
-// ✅ store verified emails temporarily
+// store verified emails temporarily
 export const verifiedEmails = new Set();
 
 const generateOTP = () => {
@@ -16,7 +16,7 @@ export const sendOTP = async (req, res) => {
     // optional: college email restriction
     if (!email.endsWith("@khwopa.edu.np")) {
       return res.status(400).json({
-        message: "Only Khwopa college emails allowed"
+        message: "in valid email. Please use your college email address.",
       });
     }
 
@@ -52,10 +52,13 @@ export const verifyOTP = (req, res) => {
   if (storedOTP == otp) {
     otpStore.delete(email);
 
-    // ✅ mark email verified
+    // mark email verified
     verifiedEmails.add(email);
 
-    return res.json({ message: "OTP verified!" });
+    return res.json({ 
+      message: "OTP verified!",
+      otpVerified: true 
+    });
   }
 
   res.status(400).json({ message: "Invalid OTP" });
