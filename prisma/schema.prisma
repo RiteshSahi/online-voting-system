@@ -6,35 +6,44 @@
 
 generator client {
   provider = "prisma-client-js"
-  
- 
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
- 
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  name     String?
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
   password String
+
+  batch      String
+  department String
+  year       Int
 
   votes      Vote[]
   candidates Candidate[]
 }
+
 model Admin {
-  id       Int    @id @default(autoincrement())
-  username String @unique
+  id       Int       @id @default(autoincrement())
+  username String    @unique
   password String
-  status   String @default("PENDING") // PENDING | APPROVED | REJECTED
+  role     AdminRole @default(ADMIN)
+  status   String    @default("PENDING") // PENDING | APPROVED | REJECTED
 }
+
 enum AdminStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
 }
 
 

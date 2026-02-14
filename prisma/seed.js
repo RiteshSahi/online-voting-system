@@ -4,38 +4,39 @@ dotenv.config({ path: "../.env" });
 import { prisma } from "../src/config/db.js";
 import bcrypt from "bcrypt";
 
-const seedAdmin = async () => {
+const seedSuperAdmin = async () => {
   try {
-    // Check if admin already exists
-    const existingAdmin = await prisma.admin.findUnique({
-      where: { username: "mainadmin" }
+    // Check if SUPER_ADMIN already exists
+    const existingAdmin = await prisma.admin.findFirst({
+      where: { role: "SUPER_ADMIN" }
     });
 
     if (existingAdmin) {
-      console.log("Main admin already exists");
+      console.log("SUPER_ADMIN already exists");
       await prisma.$disconnect();
       process.exit(0);
       return;
     }
 
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const hashedPassword = await bcrypt.hash("superadmin123", 10);
 
     await prisma.admin.create({
       data: {
-        username: "mainadmin",
+        username: "superadmin",     // You can change the username
         password: hashedPassword,
-        status: "APPROVED"
+        status: "APPROVED",
+        role: "SUPER_ADMIN"         // Set role as SUPER_ADMIN
       }
     });
 
-    console.log("Main admin created successfully");
+    console.log("SUPER_ADMIN created successfully");
     await prisma.$disconnect();
     process.exit(0);
   } catch (error) {
-    console.error("Error seeding admin:", error.message);
+    console.error("Error seeding SUPER_ADMIN:", error.message);
     await prisma.$disconnect();
     process.exit(1);
   }
 };
 
-seedAdmin();
+seedSuperAdmin();
