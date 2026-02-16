@@ -1,65 +1,106 @@
+import { prisma } from "../../config/db.js";
 import { transporter } from "../../config/mailer.js";
+import bcrypt from "bcrypt";
 
-const otpStore = new Map();
+// Generate a 6-digit OTP
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// store verified emails temporarily
-export const verifiedEmails = new Set();
-
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000);
-};
-
+// Send OTP
 export const sendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
 
-    // optional: college email restriction
+    email = email.trim().toLowerCase();
+
+    // Only allow college emails
     if (!email.endsWith("@khwopa.edu.np")) {
-      return res.status(400).json({
-        message: "in valid email. Please use your college email address.",
-      });
+      return res.status(400).json({ message: "Invalid email. Use college email only." });
     }
 
-    const otp = generateOTP();
-    otpStore.set(email, otp);
+    const otpCode = generateOTP();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 5 minutes
 
-    console.log("OTP:", otp); // debug
+    // Always create a new OTP record
+    await prisma.OTP.create({
+      data: { email, code: otpCode, expiresAt, isUsed: false },
+    });
 
+    console.log("OTP:", otpCode);
+
+    // Send OTP email
     await transporter.sendMail({
       from: process.env.EMAIL,
       to: email,
       subject: "OTP Verification",
-      text: `Your OTP is: ${otp}`,
+      text: `Your OTP is: ${otpCode}. It expires in 2 minutes.`,
     });
 
     res.json({ message: "OTP sent successfully!" });
-
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
 
-export const verifyOTP = (req, res) => {
-  const { email, otp } = req.body;
+// Verify OTP
+export const verifyOTP = async (req, res) => {
+  try {
+    let { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
 
-  const storedOTP = otpStore.get(email);
+    email = email.trim().toLowerCase();
+    otp = otp.trim();
 
-  if (!storedOTP) {
-    return res.status(400).json({ message: "No OTP found" });
-  }
-
-  if (storedOTP == otp) {
-    otpStore.delete(email);
-
-    // mark email verified
-    verifiedEmails.add(email);
-
-    return res.json({ 
-      message: "OTP verified!",
-      otpVerified: true 
+    // Get the latest OTP record for this email
+    const record = await prisma.OTP.findFirst({
+      where: { email },
+      orderBy: { createdAt: "desc" },
     });
-  }
 
-  res.status(400).json({ message: "Invalid OTP" });
+    if (!record) {
+      return res.status(400).json({ message: "OTP not found" });
+    }
+
+    if (record.isUsed) {
+      return res.status(400).json({ message: "OTP already used" });
+    }
+
+    if (new Date() > record.expiresAt) {
+      // Mark as used even if expired
+      await prisma.OTP.update({
+        where: { id: record.id },
+        data: { isUsed: true },
+      });
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    if (record.code !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // OTP is valid → mark as used
+    await prisma.OTP.update({
+      where: { id: record.id },
+      data: { isUsed: true },
+    });
+
+    // Mark user as verified if they exist
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      await prisma.user.update({
+        where: { email },
+        data: { isVerified: true },
+      });
+    }
+
+    res.json({
+      message: "OTP verified successfully!",
+      otpVerified: true,
+      user: user || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to verify OTP" });
+  }
 };

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------- USER ----------------
 model User {
   id       Int    @id @default(autoincrement())
   name     String
@@ -23,16 +18,29 @@ model User {
   department String
   year       Int
 
+  isVerified Boolean @default(false)
+
+  // Relations
   votes      Vote[]
   candidates Candidate[]
 }
 
+// ---------------- ADMIN ----------------
 model Admin {
-  id       Int       @id @default(autoincrement())
-  username String    @unique
+  id       Int         @id @default(autoincrement())
+  username String      @unique
   password String
-  role     AdminRole @default(ADMIN)
-  status   String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  role     AdminRole   @default(ADMIN)
+  status   AdminStatus @default(PENDING)
+
+  // Relations
+  eventsCreated Event[]
+}
+
+// Admin enums
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
 }
 
 enum AdminStatus {
@@ -41,47 +49,64 @@ enum AdminStatus {
   REJECTED
 }
 
-enum AdminRole {
-  SUPER_ADMIN
-  ADMIN
-}
-
-
-
+// ---------------- EVENT ----------------
 model Event {
-  id                Int      @id @default(autoincrement())
+  id                Int        @id @default(autoincrement())
   title             String
   description       String?
 
-  allowedDept       String?   // ex: "BCT", "BCE"
-  allowedBatch      String?   // ex: "080"
-  yearRestriction   Int?      // ex: only 4th year
+  allowedDept       String?
+  allowedBatch      String?
+  yearRestriction   Int?
 
   candidateDeadline DateTime
   votingStart       DateTime
   votingEnd         DateTime
 
-  status            String   @default("UPCOMING")
+  phase EventPhase @default(APPLICATION)
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
+  createdBy Int?
 
+  // Relations
   candidates Candidate[]
   votes      Vote[]
+  creator    Admin? @relation(fields: [createdBy], references: [id])
 }
 
+// Event lifecycle enum
+enum EventPhase {
+  APPLICATION
+  VERIFICATION
+  VOTING
+  CLOSED
+}
+
+// ---------------- CANDIDATE ----------------
 model Candidate {
   id        Int      @id @default(autoincrement())
   userId    Int
   eventId   Int
-  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  status    CandidateStatus @default(PENDING)
   createdAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])
 
   votes Vote[]
+
+  // Prevent duplicate applications
+  @@unique([userId, eventId])
 }
 
+// Candidate approval enum
+enum CandidateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ---------------- VOTE ----------------
 model Vote {
   id          Int      @id @default(autoincrement())
   userId      Int
@@ -93,5 +118,19 @@ model Vote {
   event     Event     @relation(fields: [eventId], references: [id])
   candidate Candidate @relation(fields: [candidateId], references: [id])
 
-  @@unique([userId, eventId]) // one vote per event
+  // One vote per user per event
+  @@unique([userId, eventId])
+}
+
+// ---------------- OTP ----------------
+model OTP {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Faster lookup for OTP verification
+  @@index([email])
 }

@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 export const changeUserPassword = async (req, res) => {
   try {
     const userId = req.userId; // comes from userAuth middleware
-
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
@@ -23,9 +22,13 @@ export const changeUserPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // ✅ Ensure user has verified email before allowing password change
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Email not verified. Cannot change password." });
+    }
+
     // Verify old password
     const validPassword = await bcrypt.compare(currentPassword, user.password);
-
     if (!validPassword) {
       return res.status(401).json({ message: "Current password incorrect" });
     }
