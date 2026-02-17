@@ -21,10 +21,9 @@ model User {
   isVerified Boolean @default(false)
 
   // Relations
-  votes      Vote[]
-  candidates Candidate[]
+  votes        Vote[]
+  candidates   Candidate[]
   notifications Notification[]
-
 }
 
 // ---------------- ADMIN ----------------
@@ -34,7 +33,6 @@ model Admin {
   password String
   role     AdminRole   @default(ADMIN)
   status   AdminStatus @default(PENDING)
-
 }
 
 // Admin enums
@@ -66,7 +64,6 @@ model Event {
   phase EventPhase @default(APPLICATION)
 
   createdAt DateTime @default(now())
-  
 
   // Relations
   candidates Candidate[]
@@ -83,29 +80,34 @@ enum EventPhase {
 
 // ---------------- CANDIDATE ----------------
 model Candidate {
-  id        Int      @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   userId    Int
   eventId   Int
+
+  vision    String?
+  goals     String?
+  statement String?
+  photoUrl  String?
+
   status    CandidateStatus @default(PENDING)
   createdAt DateTime @default(now())
 
+  // Relations
   user  User  @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])
-
   votes Vote[]
 
-  // Prevent duplicate applications
   @@unique([userId, eventId])
 }
 
-// Candidate approval enum
+// Candidate status enum ✅ ADDED
 enum CandidateStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-// ---------------- VOTE ----------------
+// ---------------- VOTE ---------------- ✅ ADDED
 model Vote {
   id          Int      @id @default(autoincrement())
   userId      Int
@@ -113,6 +115,7 @@ model Vote {
   candidateId Int
   createdAt   DateTime @default(now())
 
+  // Relations
   user      User      @relation(fields: [userId], references: [id])
   event     Event     @relation(fields: [eventId], references: [id])
   candidate Candidate @relation(fields: [candidateId], references: [id])
@@ -130,19 +133,17 @@ model OTP {
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  // Faster lookup for OTP verification
   @@index([email])
 }
 
 // ---------------- NOTIFICATION ----------------
 model Notification {
   id        Int      @id @default(autoincrement())
-  userId    Int                      
-  title     String                 
-  message   String          
+  userId    Int
+  title     String
+  message   String
   read      Boolean  @default(false)
-  createdAt DateTime @default(now()) 
+  createdAt DateTime @default(now())
 
-  // Relation
-  user      User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }

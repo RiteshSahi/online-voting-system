@@ -23,6 +23,8 @@ app.use((req, res, next) => {
 
 // Routes - mounted after middleware
 app.use('/', routes);
+app.use("/uploads", express.static("uploads"));
+
 
 // Health check route
 app.get('/health', async (req, res) => {
