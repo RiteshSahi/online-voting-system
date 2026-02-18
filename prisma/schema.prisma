@@ -81,7 +81,6 @@ model Candidate {
   id        Int @id @default(autoincrement())
   userId    Int
   eventId   Int
-
   vision    String?
   statement String?
 
