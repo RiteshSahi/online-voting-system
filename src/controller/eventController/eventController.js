@@ -16,7 +16,6 @@ export const createEvent = async (req, res) => {
       description,
       allowedDept,
       allowedBatch,
-      yearRestriction,
       candidateDeadline,
       votingStart,
       votingEnd
@@ -36,7 +35,6 @@ export const createEvent = async (req, res) => {
         description,
         allowedDept,
         allowedBatch,
-        yearRestriction,
         candidateDeadline: new Date(candidateDeadline),
         votingStart: new Date(votingStart),
         votingEnd: new Date(votingEnd)

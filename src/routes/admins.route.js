@@ -3,14 +3,15 @@ import {
     registerAdmin,
     getPendingAdmins,
     approveAdmin,
-    rejectAdmin, }from "../controller/adminController/adminApproval.controller.js";
+    rejectAdmin,
+} from "../controller/adminController/adminApproval.controller.js";
 
-import { adminLogin,adminLogout } from "../controller/adminController/adminAUth.controller.js";
+import { adminLogin, adminLogout } from "../controller/adminController/adminAUth.controller.js";
 import { changeAdminPassword } from "../controller/adminController/adminManagement.controller.js";
 import { protectAdmin } from "../middleware/adminAuth.middleware.js";
+import { superAdminOnly } from "../middleware/adminAuth.middleware.js";
 
 const adminRouter = express.Router();
-
 adminRouter.post("/login", adminLogin);
 adminRouter.post("/register", registerAdmin);
 adminRouter.get("/pending", getPendingAdmins);
@@ -18,6 +19,6 @@ adminRouter.put("/approve/:id", approveAdmin);
 adminRouter.put("/reject/:id", rejectAdmin);
 adminRouter.post("/logout", adminLogout);
 adminRouter.put("/change-password", protectAdmin, changeAdminPassword);
-
-
+// Only super admin can approve admins
+adminRouter.put("/approve/:id", protectAdmin, superAdminOnly, approveAdmin);
 export default adminRouter;

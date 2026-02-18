@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { prisma } from "../config/db.js"; // optional, if you want to fetch full user
 
 export const protectUser = async (req, res, next) => {
   try {
@@ -23,7 +22,6 @@ export const protectUser = async (req, res, next) => {
       email: decoded.email,
       batch: decoded.batch,
       department: decoded.department,
-      year: decoded.year
     };
 
     next();

@@ -16,7 +16,6 @@ model User {
 
   batch      String
   department String
-  year       Int
 
   isVerified Boolean @default(false)
 
@@ -55,7 +54,6 @@ model Event {
 
   allowedDept       String?
   allowedBatch      String?
-  yearRestriction   Int?
 
   candidateDeadline DateTime
   votingStart       DateTime
@@ -85,9 +83,7 @@ model Candidate {
   eventId   Int
 
   vision    String?
-  goals     String?
   statement String?
-  photoUrl  String?
 
   status    CandidateStatus @default(PENDING)
   createdAt DateTime @default(now())
@@ -125,7 +121,7 @@ model Vote {
 }
 
 // ---------------- OTP ----------------
-model OTP {
+model Otp{
   id        Int      @id @default(autoincrement())
   email     String
   code      String

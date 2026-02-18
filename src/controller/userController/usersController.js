@@ -42,7 +42,11 @@ const userLogin = async (req, res) => {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const token = generateToken({ id: user.id }, res);
+    const token = generateToken({ id: user.id,
+  email: user.email,
+  batch: user.batch,
+  department: user.department,
+ }, res);
 
     return res.status(200).json({
       message: "Login successful",
@@ -56,47 +60,30 @@ const userLogin = async (req, res) => {
   }
 };
 
-// ------------------ REGISTER ------------------
 const userRegister = async (req, res) => {
   try {
-    let { name, email, password } = req.body;
+    let { name, email, password, otp } = req.body; // user must provide OTP
     email = email.trim().toLowerCase();
 
-    // College email restriction
     if (!email.endsWith("@khwopa.edu.np")) {
       return res.status(400).json({ message: "Only Khwopa college emails allowed" });
     }
 
-    // Extract student data
     const { batch, department } = parseStudentEmail(email);
     const year = getStudyYear(batch);
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) return res.status(409).json({ message: "User already exists" });
-
-    // // Check latest OTP
-    const OTPRecord = await prisma.OTP.findFirst({
-      where: { email },
-      orderBy: { createdAt: "desc" }
-    });
-
-    // if (!OTPRecord) return res.status(403).json({ message: "OTP not found" });
-    // if (OTPRecord.isUsed) return res.status(403).json({ message: "OTP already used" });
-    // if (new Date() > OTPRecord.expiresAt) {
-    //   await prisma.OTP.update({ where: { id: OTPRecord.id }, data: { isUsed: true } });
-    //   return res.status(403).json({ message: "OTP expired" });
-    // }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user first
+    // Create user
     const newUser = await prisma.user.create({
-      data: { name, email, password: hashedPassword, batch, department, year, isVerified: true }
+      data: { name, email, password: hashedPassword, batch, department, isVerified: true }
     });
 
-    // Only mark OTP as used after successful user creation
+    // Mark OTP as used
     await prisma.OTP.update({
       where: { id: OTPRecord.id },
       data: { isUsed: true }

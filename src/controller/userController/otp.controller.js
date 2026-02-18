@@ -22,7 +22,7 @@ export const sendOTP = async (req, res) => {
     const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 5 minutes
 
     // Always create a new OTP record
-    await prisma.OTP.create({
+    await prisma.Otp.create({
       data: { email, code: otpCode, expiresAt, isUsed: false },
     });
 
@@ -53,7 +53,7 @@ export const verifyOTP = async (req, res) => {
     otp = otp.trim();
 
     // Get the latest OTP record for this email
-    const record = await prisma.OTP.findFirst({
+    const record = await prisma.Otp.findFirst({
       where: { email },
       orderBy: { createdAt: "desc" },
     });
@@ -68,7 +68,7 @@ export const verifyOTP = async (req, res) => {
 
     if (new Date() > record.expiresAt) {
       // Mark as used even if expired
-      await prisma.OTP.update({
+      await prisma.Otp.update({
         where: { id: record.id },
         data: { isUsed: true },
       });
@@ -80,7 +80,7 @@ export const verifyOTP = async (req, res) => {
     }
 
     // OTP is valid → mark as used
-    await prisma.OTP.update({
+    await prisma.Otp.update({
       where: { id: record.id },
       data: { isUsed: true },
     });

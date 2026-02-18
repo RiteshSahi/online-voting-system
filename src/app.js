@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
 // Debug middleware to log all requests
 app.use((req, res, next) => {
   console.log(`\n📥 ${req.method} ${req.path}`);
@@ -20,10 +21,8 @@ app.use((req, res, next) => {
   console.log("Body:", req.body);
   next();
 });
-
-// Routes - mounted after middleware
+// ✅ ADD THIS
 app.use('/', routes);
-app.use("/uploads", express.static("uploads"));
 
 
 // Health check route
