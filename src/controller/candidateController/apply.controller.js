@@ -9,7 +9,7 @@ export const applyAsCandidate = async (req, res) => {
     const { eventId } = req.params;
 
     // Manifesto data from JSON body
-    const { vision,statement } = req.body;
+    const { vision, statement } = req.body;
 
     // Basic validation
     if (!vision || !statement) {
@@ -26,7 +26,11 @@ export const applyAsCandidate = async (req, res) => {
     if (event.phase !== "APPLICATION") {
       return res.status(400).json({ message: "Event is not in application phase" });
     }
-
+    // ⚡ Add the deadline check here
+    const now = new Date();
+    if (now > event.candidateDeadline) {
+      return res.status(400).json({ message: "Application deadline has passed" });
+    }
     // 3️⃣ Check eligibility using JWT data
     const userDept = req.user.department?.trim().toUpperCase();
     const userBatch = req.user.batch?.toString().padStart(3, "0").trim();

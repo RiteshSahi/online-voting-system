@@ -63,7 +63,7 @@ const userLogin = async (req, res) => {
 const userRegister = async (req, res) => {
   try {
     let { name, email, password, otp } = req.body; // user must provide OTP
-    email = email.trim().toLowerCase();
+    email = email.trim().toUpperCase();
 
     if (!email.endsWith("@khwopa.edu.np")) {
       return res.status(400).json({ message: "Only Khwopa college emails allowed" });

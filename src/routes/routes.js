@@ -6,7 +6,7 @@ import eventRouter from "./events.route.js";
 import candidateRoutes from "./candidateRoutes.js";
 
 
-
+console.log("Main routes loaded");
 
 const router = express.Router();
 

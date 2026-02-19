@@ -11,7 +11,8 @@ import { getNotifications, markNotificationRead } from "../controller/eventContr
 const router = express.Router();
 
 router.post("/", protectAdmin, superAdminOnly, createEvent);
-router.get("/", getEvents);
+router.get("/user", protectUser, getEvents);//for user
+router.get("/admin", protectAdmin, getEvents);//for admin
 router.patch(
   "/:id/phase",
   protectAdmin, superAdminOnly,updateEventPhase
