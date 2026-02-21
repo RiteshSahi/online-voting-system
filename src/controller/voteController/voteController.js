@@ -1,3 +1,6 @@
+import { prisma } from "../../config/db.js";
+import { derivePhase } from "../../utils/eventPhase.js"; // ← import derivePhase
+
 export const voteCandidate = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -13,20 +16,10 @@ export const voteCandidate = async (req, res) => {
       return res.status(404).json({ message: "Candidate not found" });
     }
 
-    const now = new Date();
-    const { votingStart, votingEnd } = candidate.event;
-
-    // 2️⃣ Voting window check
-    if (!votingStart || !votingEnd) {
-      return res.status(400).json({ message: "Voting schedule not configured" });
-    }
-
-    if (now < votingStart) {
-      return res.status(400).json({ message: "Voting has not started yet" });
-    }
-
-    if (now > votingEnd) {
-      return res.status(400).json({ message: "Voting has ended" });
+    // 2️⃣ Voting phase check using derivePhase
+    const phase = derivePhase(candidate.event);
+    if (phase !== "VOTING") {
+      return res.status(403).json({ message: "Voting is not open currently" });
     }
 
     // 3️⃣ Candidate approval check

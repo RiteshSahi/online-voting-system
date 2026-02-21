@@ -125,6 +125,7 @@ model Otp{
   email     String
   code      String
   expiresAt DateTime
+  isVerified Boolean @default(false)
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
 

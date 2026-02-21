@@ -1,11 +1,9 @@
 import { prisma } from "../../config/db.js";
 import { transporter } from "../../config/mailer.js";
-import bcrypt from "bcrypt";
 
-// Generate a 6-digit OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Send OTP
+// STEP 1 - Send OTP
 export const sendOTP = async (req, res) => {
   try {
     let { email } = req.body;
@@ -13,27 +11,25 @@ export const sendOTP = async (req, res) => {
 
     email = email.trim().toLowerCase();
 
-    // Only allow college emails
     if (!email.endsWith("@khwopa.edu.np")) {
       return res.status(400).json({ message: "Invalid email. Use college email only." });
     }
 
     const otpCode = generateOTP();
-    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for testing
 
-    // Always create a new OTP record
-    await prisma.Otp.create({
+    await prisma.Otp.deleteMany({ where: { email } });
+    
+    const created = await prisma.Otp.create({
       data: { email, code: otpCode, expiresAt, isUsed: false },
     });
+    console.log("✅ OTP saved to DB:", created); // confirm it saved
 
-    console.log("OTP:", otpCode);
-
-    // Send OTP email
     await transporter.sendMail({
       from: process.env.EMAIL,
       to: email,
       subject: "OTP Verification",
-      text: `Your OTP is: ${otpCode}. It expires in 2 minutes.`,
+      text: `Your OTP is: ${otpCode}. It expires in 10 minutes.`,
     });
 
     res.json({ message: "OTP sent successfully!" });
@@ -43,7 +39,7 @@ export const sendOTP = async (req, res) => {
   }
 };
 
-// Verify OTP
+// STEP 2 - mark as verified
 export const verifyOTP = async (req, res) => {
   try {
     let { email, otp } = req.body;
@@ -52,55 +48,35 @@ export const verifyOTP = async (req, res) => {
     email = email.trim().toLowerCase();
     otp = otp.trim();
 
-    // Get the latest OTP record for this email
-    const record = await prisma.Otp.findFirst({
+    const otpRecord = await prisma.Otp.findFirst({
       where: { email },
       orderBy: { createdAt: "desc" },
     });
 
-    if (!record) {
-      return res.status(400).json({ message: "OTP not found" });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "OTP not found. Please request a new OTP." });
     }
-
-    if (record.isUsed) {
-      return res.status(400).json({ message: "OTP already used" });
+    if (otpRecord.isUsed) {
+      return res.status(400).json({ message: "OTP already used. Please request a new OTP." });
     }
-
-    if (new Date() > record.expiresAt) {
-      // Mark as used even if expired
-      await prisma.Otp.update({
-        where: { id: record.id },
-        data: { isUsed: true },
-      });
-      return res.status(400).json({ message: "OTP expired" });
+    if (new Date() > otpRecord.expiresAt) {
+      await prisma.Otp.update({ where: { id: otpRecord.id }, data: { isUsed: true } });
+      return res.status(400).json({ message: "OTP expired. Please request a new OTP." });
     }
-
-    if (record.code !== otp) {
+    if (otpRecord.code !== otp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // OTP is valid → mark as used
+    // ✅ Mark as verified so register knows OTP was confirmed
     await prisma.Otp.update({
-      where: { id: record.id },
-      data: { isUsed: true },
+      where: { id: otpRecord.id },
+      data: { isVerified: true },
     });
 
-    // Mark user as verified if they exist
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (user) {
-      await prisma.user.update({
-        where: { email },
-        data: { isVerified: true },
-      });
-    }
+    res.json({ message: "OTP verified successfully!", otpVerified: true });
 
-    res.json({
-      message: "OTP verified successfully!",
-      otpVerified: true,
-      user: user || null,
-    });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("OTP verification error:", error);
     res.status(500).json({ message: "Failed to verify OTP" });
   }
 };
