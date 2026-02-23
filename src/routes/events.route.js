@@ -2,7 +2,7 @@ import express from "express";
 import { protectUser } from "../middleware/userAuth.midlleware.js";
 import { protectAdmin, superAdminOnly  } from "../middleware/adminAuth.middleware.js";
 import { createEvent } from "../controller/eventController/createEvent.js";
-import { getEvents } from "../controller/eventController/getEvents.js";
+import { getUserEvents,getAdminEvents } from "../controller/eventController/getEvents.js";
 import { extendApplicationDeadline } from "../controller/eventController/extendDeadline.js";
 import { updateEventPhase } from "../controller/eventController/updateEventPhase.js";
 import { getNotifications, markNotificationRead } from "../controller/eventController/notificationController.js";
@@ -11,8 +11,8 @@ import { getNotifications, markNotificationRead } from "../controller/eventContr
 const router = express.Router();
 
 router.post("/", protectAdmin, superAdminOnly, createEvent);
-router.get("/user", protectUser, getEvents);//for user
-router.get("/admin", protectAdmin, getEvents);//for admin
+router.get("/user", protectUser, getUserEvents);//for user
+router.get("/admin", protectAdmin, getAdminEvents);//for admin
 router.patch(
   "/:id/phase",
   protectAdmin, superAdminOnly,updateEventPhase

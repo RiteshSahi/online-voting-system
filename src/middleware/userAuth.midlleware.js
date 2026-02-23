@@ -23,6 +23,7 @@ export const protectUser = async (req, res, next) => {
       batch: decoded.batch,
       department: decoded.department,
     };
+    console.log("Authenticated user:", req.user);
 
     next();
   } catch (error) {

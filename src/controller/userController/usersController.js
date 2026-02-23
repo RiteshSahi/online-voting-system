@@ -3,10 +3,11 @@ import bcrypt from 'bcrypt';
 import { generateToken } from '../../utils/generateToken.js';
 
 const parseStudentEmail = (email) => {
-  const localPart = email.split("@")[0];
-  const batch = localPart.substring(0, 3);
-  const department = localPart.substring(3, 6).toUpperCase();
-  return { batch, department };
+const localPart = email.split("@")[0];
+const batch = localPart.substring(3, 6);        
+const department = localPart.substring(6, 9).toUpperCase();  
+
+return { batch, department };
 };
 
 const getStudyYear = (batch) => {

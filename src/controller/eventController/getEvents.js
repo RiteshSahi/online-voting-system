@@ -1,45 +1,53 @@
 import { prisma } from "../../config/db.js";
 import { derivePhase } from "../../utils/eventPhasee.js";
 
-export const getEvents = async (req, res) => {
+export const getAdminEvents = async (req, res) => {
   try {
-    let filter = {};
+    const events = await prisma.event.findMany({
+      orderBy: { createdAt: "desc" }
+    });
 
-    // Admin sees all events
-    if (req.user && !req.admin) {
-      filter = {
-        allowedDept: { equals: req.user.department, mode: "insensitive" },
-        allowedBatch: { equals: req.user.batch, mode: "insensitive" },
-        candidateDeadline: { gt: new Date() }, // application still open
-        NOT: {
-          candidates: { some: { userId: req.user.id } } // user hasn't applied yet
-        }
-      };
-    }
+    const enriched = events.map(e => ({
+      ...e,
+      phase: derivePhase(e)
+    }));
 
+    res.json(enriched);
+
+  } catch (error) {
+    console.error("Admin get events error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getUserEvents = async (req, res) => {
+  try {
+
+    const filter = {
+      allowedDept: { equals: req.user.department, mode: "insensitive" },
+      allowedBatch: { equals: req.user.batch, mode: "insensitive" },
+      candidateDeadline: { gt: new Date() }, 
+      // NOT: {
+      //   candidates: {
+      //     some: { userId: req.user.id }
+      //   }
+      // }
+    };
+    console.log("Event filter for user:", filter);
     const events = await prisma.event.findMany({
       where: filter,
       orderBy: { createdAt: "desc" }
     });
 
     const enriched = events.map(e => ({
-      id: e.id,
-      title: e.title,
-      description: e.description,
-      allowedDept: e.allowedDept,
-      allowedBatch: e.allowedBatch,
-      candidateDeadline: e.candidateDeadline,
-      votingStart: e.votingStart,
-      votingEnd: e.votingEnd,
-      createdAt: e.createdAt,
-      updatedAt: e.updatedAt,
-      phase: derivePhase(e) // dynamic phase
+      ...e,
+      phase: derivePhase(e)
     }));
 
     res.json(enriched);
 
   } catch (error) {
-    console.error("Get events error:", error);
+    console.error("User get events error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
